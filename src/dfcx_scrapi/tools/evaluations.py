@@ -215,9 +215,15 @@ class Evaluations(ScrapiBase):
             # actions to be able to evaluate `inner-loop` tasks
             if row["action_type"] != "User Utterance":
                 continue
-
+            #added a section to pass in action input parameters into the api
+            parameters = row["action_input_parameters"]
+            if isinstance(parameters, pd.Series):  # If a Series, extract its first value
+                parameters = parameters.iloc[0]
+            elif parameters is None:
+                parameters = {}
+                
             res = self.s.detect_intent(
-                self.agent_id, self.session_id, row["action_input"]
+                self.agent_id, self.session_id, row["action_input"], parameters=parameters
             )
 
             # Add data to the existing row
@@ -425,7 +431,7 @@ class DataLoader:
                 df.loc[pair[0], "playbook_pair"] = str(pair[1])
 
         return df
-    
+
     def pair_flow_calls(self, df: pd.DataFrame) -> pd.DataFrame:
         "Identifies pairings of agent_utterance/flow_invocation by eval_id."
         df["flow_pair"] = pd.Series(dtype="string")
